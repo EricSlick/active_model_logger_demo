@@ -1,0 +1,177 @@
+<div class="container">
+  <h1>ActiveModelLogger Demo</h1>
+  <p class="lead">This demo shows how to use the ActiveModelLogger gem in a Rails application.</p>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Demo Actions</h5>
+        </div>
+        <div class="card-body">
+          <%= form_with url: create_demo_path, method: :post, local: true do |form| %>
+            <%= form.submit "Create Demo Data", class: "btn btn-primary me-2" %>
+          <% end %>
+
+          <%= form_with url: clear_logs_path, method: :delete, local: true do |form| %>
+            <%= form.submit "Clear All Logs", class: "btn btn-danger",
+                confirm: "Are you sure you want to clear all logs?" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Statistics</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Users:</strong> <%= @users.count %></p>
+          <p><strong>Orders:</strong> <%= @orders.count %></p>
+          <p><strong>Total Logs:</strong> <%= @logs.count %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Recent Logs</h5>
+        </div>
+        <div class="card-body">
+          <% if @logs.any? %>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Model</th>
+                    <th>Message</th>
+                    <th>Log Chain</th>
+                    <th>Level</th>
+                    <th>Visibility</th>
+                    <th>Status</th>
+                    <th>Category</th>
+                    <th>Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @logs.each do |log| %>
+                    <tr>
+                      <td><%= log.created_at.strftime("%H:%M:%S") %></td>
+                      <td>
+                        <span class="badge bg-secondary">
+                          <%= log.loggable_type %>
+                        </span>
+                      </td>
+                      <td><%= log.message %></td>
+                      <td>
+                        <% if log.log_chain %>
+                          <span class="badge bg-info">
+                            <%= log.log_chain %>
+                          </span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="badge bg-<%= log.log_level == 'error' ? 'danger' : 'info' %>">
+                          <%= log.log_level %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge bg-warning">
+                          <%= log.visible_to %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if log.status %>
+                          <span class="badge bg-success"><%= log.status %></span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if log.category %>
+                          <span class="badge bg-primary"><%= log.category %></span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if log.data %>
+                          <small class="text-muted">
+                            <%= JSON.pretty_generate(log.data).truncate(100) %>
+                          </small>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="text-muted">No logs found. Click "Create Demo Data" to generate some sample logs.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Code Examples</h5>
+        </div>
+        <div class="card-body">
+          <h6>Basic Logging:</h6>
+          <pre><code>user.log("User logged in")</code></pre>
+
+          <h6>Logging with Log Chain:</h6>
+          <pre><code>user.log("Payment processed", log_chain: "payment_123")</code></pre>
+
+          <h6>Logging with Metadata:</h6>
+          <pre><code>user.log("Payment processed",
+         log_level: "info",
+         log_chain: "payment_processed",
+         metadata: {
+           status: "success",
+           category: "payment",
+           data: {
+             amount: 99.99,
+             currency: "USD"
+           }
+         })</code></pre>
+
+          <h6>Cached Log Chain Behavior:</h6>
+          <pre><code># First log generates and caches a UUID
+user.log("First log")  # Uses: "abc-123-def"
+
+# Subsequent logs use the cached chain
+user.log("Second log")  # Uses: "abc-123-def" (cached)
+user.log("Third log")   # Uses: "abc-123-def" (cached)
+
+# Explicit log_chain breaks the cache
+user.log("New process", log_chain: "process_456")  # Uses: "process_456"
+
+# Next logs use the new cached chain
+user.log("Step 1")  # Uses: "process_456" (cached)
+user.log("Step 2")  # Uses: "process_456" (cached)</code></pre>
+
+          <h6>Batch Logging:</h6>
+          <pre><code>user.log_batch([
+  { message: "Step 1 completed", log_chain: "step_1", status: "success" },
+  { message: "Step 2 completed", log_chain: "step_2", status: "success" },
+  { message: "Process finished", log_chain: "process_complete", status: "complete" }
+])</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  .card { margin-bottom: 20px; }
+  .badge { font-size: 0.75em; }
+  pre { background: #f8f9fa; padding: 10px; border-radius: 4px; }
+  .table th { background-color: #f8f9fa; }
+</style>
