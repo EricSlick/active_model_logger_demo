@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   post "home/create_batch_demo", as: :create_batch_demo
   post "home/create_cleanup_demo", as: :create_cleanup_demo
   post "home/create_block_demo", as: :create_block_demo
+  post "home/create_nested_keys_demo", as: :create_nested_keys_demo
+  post "home/create_test_logs_for_cleanup", as: :create_test_logs_for_cleanup
   delete "home/clear_logs", as: :clear_logs
   delete "home/cleanup_old_logs", as: :cleanup_old_logs
 

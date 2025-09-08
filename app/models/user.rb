@@ -69,12 +69,12 @@ class User < ApplicationRecord
 
   # Demonstrate log cleanup
   def cleanup_old_logs
-    cleanup_logs(older_than: 7.days, keep_recent: 50)
+    cleanup_logs(older_than: 7.days, keep_recent: 10)
   end
 
   # Demonstrate enhanced query methods
   def recent_errors
-    active_model_logs.by_level('error').limit(5)
+    active_model_logs.by_level("error").limit(5)
   end
 
   def logs_by_category(category)

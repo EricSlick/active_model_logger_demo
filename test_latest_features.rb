@@ -6,8 +6,8 @@ require_relative 'config/environment'
 puts "Testing Latest ActiveModelLogger Features..."
 puts "=" * 50
 
-# Test 1: Enhanced Log Key Management
-puts "\n1. Testing Enhanced Log Key Management"
+# Test 1: Enhanced Log Chain Management
+puts "\n1. Testing Enhanced Log Chain Management"
 puts "-" * 40
 
 user = User.create!(
@@ -28,7 +28,7 @@ puts "✓ Started user session"
 
 # Log session activities (uses cached log_chain)
 user.log_session_activity("viewed_profile", { profile_id: user.id })
-user.log_session_activity("updated_settings", { settings_updated: ["theme", "notifications"] })
+user.log_session_activity("updated_settings", { settings_updated: [ "theme", "notifications" ] })
 user.log_session_activity("browsed_products", { products_viewed: 5, category: "electronics" })
 
 puts "✓ Logged session activities"
@@ -58,7 +58,7 @@ workflow_steps = [
   { message: "User registration started", level: "info", status: "started", data: { step: 1 } },
   { message: "Email validation completed", level: "info", status: "completed", data: { step: 2, email: batch_user.email } },
   { message: "Profile creation in progress", level: "debug", status: "in_progress", data: { step: 3 } },
-  { message: "Preferences configured", level: "info", status: "completed", data: { step: 4, preferences: ["email_notifications", "sms_alerts"] } },
+  { message: "Preferences configured", level: "info", status: "completed", data: { step: 4, preferences: [ "email_notifications", "sms_alerts" ] } },
   { message: "Welcome email sent", level: "info", status: "completed", data: { step: 5, email_template: "welcome_v2" } },
   { message: "User onboarding completed", level: "info", status: "completed", data: { step: 6, total_time: "2.5s" } }
 ]
@@ -79,7 +79,7 @@ order = batch_user.orders.create!(
 # Start order processing
 order.start_order_processing
 order.log_processing_step("validating_payment", { payment_method: "credit_card" })
-order.log_processing_step("checking_inventory", { items: ["laptop", "mouse"] })
+order.log_processing_step("checking_inventory", { items: [ "laptop", "mouse" ] })
 order.log_processing_step("preparing_shipment", { warehouse: "warehouse_1" })
 order.complete_order_processing
 
@@ -114,6 +114,11 @@ puts "Info logs: #{query_user.active_model_logs.by_level('info').count}"
 puts "Logs with data: #{query_user.active_model_logs.with_data.count}"
 puts "Logs by category 'test': #{query_user.logs_by_category('test').count}"
 puts "Logs by status 'success': #{query_user.active_model_logs.by_status('success').count}"
+
+# Test with_keys scope
+puts "Logs with 'status' key: #{query_user.active_model_logs.with_keys('status').count}"
+puts "Logs with 'category' key: #{query_user.active_model_logs.with_keys('category').count}"
+puts "Logs with both 'status' and 'category': #{query_user.active_model_logs.with_keys('status', 'category').count}"
 
 # Test 5: Log Cleanup
 puts "\n5. Testing Log Cleanup"

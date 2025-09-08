@@ -40,16 +40,28 @@
               <% end %>
               <small class="text-muted">Block logging with automatic start/end</small>
             </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_nested_keys_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Nested Keys Demo", class: "btn btn-purple w-100" %>
+              <% end %>
+              <small class="text-muted">Enhanced with_keys scope with nested searching</small>
+            </div>
           </div>
           <hr>
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <%= form_with url: clear_logs_path, method: :delete, local: true do |form| %>
                 <%= form.submit "Clear All Logs", class: "btn btn-danger w-100",
                     confirm: "Are you sure you want to clear all logs?" %>
               <% end %>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <%= form_with url: create_test_logs_for_cleanup_path, method: :post, local: true do |form| %>
+                <%= form.submit "Create Test Logs (3 Weeks)", class: "btn btn-info w-100" %>
+              <% end %>
+              <small class="text-muted">30 logs spanning previous 3 weeks</small>
+            </div>
+            <div class="col-md-4">
               <%= form_with url: cleanup_old_logs_path, method: :delete, local: true do |form| %>
                 <%= form.submit "Cleanup Old Logs", class: "btn btn-secondary w-100",
                     confirm: "Clean up logs older than 7 days?" %>
@@ -68,11 +80,16 @@
         <div class="card-body">
           <p><strong>Users:</strong> <%= @users.count %></p>
           <p><strong>Orders:</strong> <%= @orders.count %></p>
-          <p><strong>Total Logs:</strong> <%= @logs.count %></p>
+          <p><strong>Total Logs:</strong> <%= ActiveModelLogger::Log.count %></p>
+          <p><strong>Showing:</strong> <%= @logs.count %> of <%= ActiveModelLogger::Log.count %></p>
           <hr>
           <p><strong>Error Logs:</strong> <%= ActiveModelLogger::Log.error_logs.count %></p>
           <p><strong>Info Logs:</strong> <%= ActiveModelLogger::Log.info_logs.count %></p>
           <p><strong>Debug Logs:</strong> <%= ActiveModelLogger::Log.debug_logs.count %></p>
+          <hr>
+          <p><strong>Logs with 'email' key:</strong> <%= ActiveModelLogger::Log.with_keys("email").count %></p>
+          <p><strong>Logs with 'enabled' key:</strong> <%= ActiveModelLogger::Log.with_keys("enabled").count %></p>
+          <p><strong>Logs with 'status' key:</strong> <%= ActiveModelLogger::Log.with_keys("status").count %></p>
         </div>
       </div>
     </div>
@@ -90,10 +107,10 @@
               <table class="table table-striped">
                 <thead>
                   <tr>
-                    <th>Time</th>
+                    <th>Age</th>
                     <th>Model</th>
                     <th>Message</th>
-                    <th>Log Key</th>
+                    <th>Log Chain</th>
                     <th>Level</th>
                     <th>Visibility</th>
                     <th>Status</th>
@@ -104,7 +121,22 @@
                 <tbody>
                   <% @logs.each do |log| %>
                     <tr>
-                      <td><%= log.created_at.strftime("%H:%M:%S") %></td>
+                      <td>
+                        <% days_old = ((Time.current - log.created_at) / 1.day).round(1) %>
+                        <% if days_old < 1 %>
+                          <span class="badge bg-success"><%= log.created_at.strftime("%H:%M:%S") %></span>
+                          <br><small class="text-muted">Today</small>
+                        <% elsif days_old < 7 %>
+                          <span class="badge bg-info"><%= days_old.to_i %>d ago</span>
+                          <br><small class="text-muted"><%= log.created_at.strftime("%m/%d %H:%M") %></small>
+                        <% elsif days_old < 30 %>
+                          <span class="badge bg-warning"><%= days_old.to_i %>d ago</span>
+                          <br><small class="text-muted"><%= log.created_at.strftime("%m/%d") %></small>
+                        <% else %>
+                          <span class="badge bg-danger"><%= days_old.to_i %>d ago</span>
+                          <br><small class="text-muted"><%= log.created_at.strftime("%m/%d/%y") %></small>
+                        <% end %>
+                      </td>
                       <td>
                         <span class="badge bg-secondary">
                           <%= log.loggable_type %>
@@ -143,10 +175,9 @@
                         <% end %>
                       </td>
                       <td>
-                        <% data = log.metadata && log.metadata['data'] %>
-                        <% if data %>
+                        <% if log.metadata %>
                           <small class="text-muted">
-                            <%= JSON.pretty_generate(data).truncate(100) %>
+                            <%= JSON.pretty_generate(log.metadata).truncate(1000) %>
                           </small>
                         <% end %>
                       </td>
@@ -155,6 +186,19 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination -->
+            <% if @logs.respond_to?(:current_page) %>
+              <div class="mt-4">
+                <div class="d-flex justify-content-center">
+                  <%= paginate @logs %>
+                </div>
+                <div class="pagination-info">
+                  Page <%= @logs.current_page %> of <%= @logs.total_pages %>
+                  (<%= @logs.count %> of <%= @logs.total_count %> logs)
+                </div>
+              </div>
+            <% end %>
           <% else %>
             <p class="text-muted">No logs found. Click "Create Demo Data" to generate some sample logs.</p>
           <% end %>
@@ -170,7 +214,7 @@
           <h5>Code Examples</h5>
         </div>
         <div class="card-body">
-          <h6>Enhanced Log Key Management:</h6>
+          <h6>Enhance Chain Management:</h6>
           <pre><code># Start a session (generates new log_chain)
 user.start_user_session({ ip_address: "192.168.1.1" })
 
@@ -198,15 +242,16 @@ user.logs_in_range(1.hour.ago, Time.current)  # Time range queries</code></pre>
 
           <h6>Log Cleanup & Maintenance:</h6>
           <pre><code># Clean up old logs while keeping recent ones
-user.cleanup_logs(older_than: 7.days, keep_recent: 50)
+user.cleanup_logs(older_than: 7.days, keep_recent: 10)
 
 # Class-level queries
 User.with_recent_logs(since: 1.hour.ago)  # Users with recent activity
 User.with_logs_at_level("error")          # Users with error logs</code></pre>
 
           <h6>Block Logging with Automatic Start/End:</h6>
-          <pre><code># Block logging automatically logs start and end
-user.log_block("Complex Data Processing") do |logger|
+          <pre><code># Block logging with manual start/end messages
+user.log_block do |logger|
+  logger.log("Complex Data Processing started", log_level: "info")
   logger.log("Starting validation", log_level: "info")
   logger.log("Processing step 1", log_level: "debug",
              metadata: { step: 1, status: "in_progress" })
@@ -214,8 +259,9 @@ user.log_block("Complex Data Processing") do |logger|
              metadata: { step: 2, status: "completed" })
   logger.log("Operation completed", log_level: "info",
              metadata: { total_steps: 2, duration: "0.5s" })
+  logger.log("Complex Data Processing completed", log_level: "info")
 end
-# Automatically logs: "Complex Data Processing started" and "Complex Data Processing completed"</code></pre>
+# All logs within the block share the same log_chain for grouping</code></pre>
 
           <h6>Advanced Metadata Support:</h6>
           <pre><code># Rich structured data in logs
@@ -231,6 +277,19 @@ user.log("Complex operation completed",
              warnings: 2
            }
          })</code></pre>
+
+          <h6>Enhanced with_keys Scope (v0.2.1):</h6>
+          <pre><code># Find logs with keys anywhere in metadata (including nested)
+ActiveModelLogger::Log.with_keys("email")        # Finds email at any nesting level
+ActiveModelLogger::Log.with_keys("enabled")      # Finds enabled in deeply nested config
+ActiveModelLogger::Log.with_keys("email", "sms") # Finds logs with both keys
+
+# Examples of nested structures that would be found:
+# {"settings": {"notifications": {"email": true, "sms": false}}}
+# {"user": {"profile": {"contact": {"email": "user@example.com"}}}}
+# {"config": {"cache": {"redis": {"enabled": true}}}}
+
+# All of these would be found by with_keys("email") or with_keys("enabled")</code></pre>
         </div>
       </div>
     </div>
@@ -243,4 +302,6 @@ user.log("Complex operation completed",
   .badge { font-size: 0.75em; }
   pre { background: #f8f9fa; padding: 10px; border-radius: 4px; }
   .table th { background-color: #f8f9fa; }
+  .btn-purple { background-color: #6f42c1; border-color: #6f42c1; color: white; }
+  .btn-purple:hover { background-color: #5a32a3; border-color: #5a32a3; color: white; }
 </style>

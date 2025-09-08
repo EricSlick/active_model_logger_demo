@@ -64,14 +64,14 @@ query_user = User.create!(
 )
 
 # Create logs with different categories and levels
-categories = ["auth", "payment", "order", "session", "error"]
-levels = ["debug", "info", "warn", "error"]
+categories = [ "auth", "payment", "order", "session", "error" ]
+levels = [ "debug", "info", "warn", "error" ]
 
 (1..200).each do |i|
   query_user.log("Performance test log #{i}",
     log_level: levels.sample,
     metadata: {
-      status: ["success", "failed", "pending"].sample,
+      status: [ "success", "failed", "pending" ].sample,
       category: categories.sample,
       data: { iteration: i, random_data: SecureRandom.hex(8) }
     })
