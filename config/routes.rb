@@ -3,7 +3,12 @@ Rails.application.routes.draw do
 
   get "home/index"
   post "home/create_demo", as: :create_demo
+  post "home/create_session_demo", as: :create_session_demo
+  post "home/create_batch_demo", as: :create_batch_demo
+  post "home/create_cleanup_demo", as: :create_cleanup_demo
+  post "home/create_block_demo", as: :create_block_demo
   delete "home/clear_logs", as: :clear_logs
+  delete "home/cleanup_old_logs", as: :cleanup_old_logs
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -95,14 +95,14 @@ user.log_batch([
 
 ## Log Structure
 
-All logs are stored in the `active_record_logs` table with:
+All logs are stored in the `active_model_logs` table with:
 - `message`: The log message
 - `metadata`: JSON field containing:
   - `log_level`: Log level (info, warn, error, etc.)
   - `visible_to`: Who can see this log
   - `status`, `category`, `type`, `title`: Additional metadata
   - `data`: Flexible field for structured data
-  - `log_key`: Groups related logs together
+  - `log_chain`: Groups related logs together
 
 ## Learn More
 

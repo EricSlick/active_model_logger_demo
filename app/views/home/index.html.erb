@@ -3,25 +3,64 @@
   <p class="lead">This demo shows how to use the ActiveModelLogger gem in a Rails application.</p>
 
   <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-8">
       <div class="card">
         <div class="card-header">
-          <h5>Demo Actions</h5>
+          <h5>Enhanced Demo Actions</h5>
         </div>
         <div class="card-body">
-          <%= form_with url: create_demo_path, method: :post, local: true do |form| %>
-            <%= form.submit "Create Demo Data", class: "btn btn-primary me-2" %>
-          <% end %>
-
-          <%= form_with url: clear_logs_path, method: :delete, local: true do |form| %>
-            <%= form.submit "Clear All Logs", class: "btn btn-danger",
-                confirm: "Are you sure you want to clear all logs?" %>
-          <% end %>
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Create Basic Demo", class: "btn btn-primary w-100" %>
+              <% end %>
+              <small class="text-muted">Basic logging features</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_session_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Session Workflow Demo", class: "btn btn-info w-100" %>
+              <% end %>
+              <small class="text-muted">Log chain management & session tracking</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_batch_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Batch Logging Demo", class: "btn btn-success w-100" %>
+              <% end %>
+              <small class="text-muted">Performance-optimized batch operations</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_cleanup_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Cleanup Demo", class: "btn btn-warning w-100" %>
+              <% end %>
+              <small class="text-muted">Log cleanup & maintenance features</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_block_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Block Logging Demo", class: "btn btn-dark w-100" %>
+              <% end %>
+              <small class="text-muted">Block logging with automatic start/end</small>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-md-6">
+              <%= form_with url: clear_logs_path, method: :delete, local: true do |form| %>
+                <%= form.submit "Clear All Logs", class: "btn btn-danger w-100",
+                    confirm: "Are you sure you want to clear all logs?" %>
+              <% end %>
+            </div>
+            <div class="col-md-6">
+              <%= form_with url: cleanup_old_logs_path, method: :delete, local: true do |form| %>
+                <%= form.submit "Cleanup Old Logs", class: "btn btn-secondary w-100",
+                    confirm: "Clean up logs older than 7 days?" %>
+              <% end %>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-4">
       <div class="card">
         <div class="card-header">
           <h5>Statistics</h5>
@@ -30,6 +69,10 @@
           <p><strong>Users:</strong> <%= @users.count %></p>
           <p><strong>Orders:</strong> <%= @orders.count %></p>
           <p><strong>Total Logs:</strong> <%= @logs.count %></p>
+          <hr>
+          <p><strong>Error Logs:</strong> <%= ActiveModelLogger::Log.error_logs.count %></p>
+          <p><strong>Info Logs:</strong> <%= ActiveModelLogger::Log.info_logs.count %></p>
+          <p><strong>Debug Logs:</strong> <%= ActiveModelLogger::Log.debug_logs.count %></p>
         </div>
       </div>
     </div>
@@ -50,7 +93,7 @@
                     <th>Time</th>
                     <th>Model</th>
                     <th>Message</th>
-                    <th>Log Chain</th>
+                    <th>Log Key</th>
                     <th>Level</th>
                     <th>Visibility</th>
                     <th>Status</th>
@@ -69,36 +112,41 @@
                       </td>
                       <td><%= log.message %></td>
                       <td>
-                        <% if log.log_chain %>
+                        <% if log.metadata && log.metadata['log_key'] %>
                           <span class="badge bg-info">
-                            <%= log.log_chain %>
+                            <%= log.metadata['log_key'] %>
                           </span>
                         <% end %>
                       </td>
                       <td>
-                        <span class="badge bg-<%= log.log_level == 'error' ? 'danger' : 'info' %>">
-                          <%= log.log_level %>
+                        <% log_level = log.metadata && log.metadata['log_level'] %>
+                        <span class="badge bg-<%= log_level == 'error' ? 'danger' : 'info' %>">
+                          <%= log_level || 'info' %>
                         </span>
                       </td>
                       <td>
+                        <% visible_to = log.metadata && log.metadata['visible_to'] %>
                         <span class="badge bg-warning">
-                          <%= log.visible_to %>
+                          <%= visible_to || 'user' %>
                         </span>
                       </td>
                       <td>
-                        <% if log.status %>
-                          <span class="badge bg-success"><%= log.status %></span>
+                        <% status = log.metadata && log.metadata['status'] %>
+                        <% if status %>
+                          <span class="badge bg-success"><%= status %></span>
                         <% end %>
                       </td>
                       <td>
-                        <% if log.category %>
-                          <span class="badge bg-primary"><%= log.category %></span>
+                        <% category = log.metadata && log.metadata['category'] %>
+                        <% if category %>
+                          <span class="badge bg-primary"><%= category %></span>
                         <% end %>
                       </td>
                       <td>
-                        <% if log.data %>
+                        <% data = log.metadata && log.metadata['data'] %>
+                        <% if data %>
                           <small class="text-muted">
-                            <%= JSON.pretty_generate(log.data).truncate(100) %>
+                            <%= JSON.pretty_generate(data).truncate(100) %>
                           </small>
                         <% end %>
                       </td>
@@ -122,46 +170,67 @@
           <h5>Code Examples</h5>
         </div>
         <div class="card-body">
-          <h6>Basic Logging:</h6>
-          <pre><code>user.log("User logged in")</code></pre>
+          <h6>Enhanced Log Key Management:</h6>
+          <pre><code># Start a session (generates new log_chain)
+user.start_user_session({ ip_address: "192.168.1.1" })
 
-          <h6>Logging with Log Chain:</h6>
-          <pre><code>user.log("Payment processed", log_chain: "payment_123")</code></pre>
+# Subsequent activities use cached log_chain
+user.log_session_activity("viewed_profile", { profile_id: 123 })
+user.log_session_activity("updated_settings", { settings: ["theme"] })
 
-          <h6>Logging with Metadata:</h6>
-          <pre><code>user.log("Payment processed",
+# End session (uses cached log_chain)
+user.end_user_session</code></pre>
+
+          <h6>Batch Logging for Performance:</h6>
+          <pre><code># Batch multiple log entries efficiently
+user.log_user_workflow_steps([
+  { message: "Step 1 completed", level: "info", status: "success" },
+  { message: "Step 2 completed", level: "debug", status: "in_progress" },
+  { message: "Process finished", level: "info", status: "completed" }
+])</code></pre>
+
+          <h6>Enhanced Query Methods:</h6>
+          <pre><code># Query logs by various criteria
+user.recent_errors                    # Recent error logs
+user.logs_by_category("session")     # Logs by category
+user.logs(log_chain: user.log_chain)     # Logs in specific chain
+user.logs_in_range(1.hour.ago, Time.current)  # Time range queries</code></pre>
+
+          <h6>Log Cleanup & Maintenance:</h6>
+          <pre><code># Clean up old logs while keeping recent ones
+user.cleanup_logs(older_than: 7.days, keep_recent: 50)
+
+# Class-level queries
+User.with_recent_logs(since: 1.hour.ago)  # Users with recent activity
+User.with_logs_at_level("error")          # Users with error logs</code></pre>
+
+          <h6>Block Logging with Automatic Start/End:</h6>
+          <pre><code># Block logging automatically logs start and end
+user.log_block("Complex Data Processing") do |logger|
+  logger.log("Starting validation", log_level: "info")
+  logger.log("Processing step 1", log_level: "debug",
+             metadata: { step: 1, status: "in_progress" })
+  logger.log("Processing step 2", log_level: "debug",
+             metadata: { step: 2, status: "completed" })
+  logger.log("Operation completed", log_level: "info",
+             metadata: { total_steps: 2, duration: "0.5s" })
+end
+# Automatically logs: "Complex Data Processing started" and "Complex Data Processing completed"</code></pre>
+
+          <h6>Advanced Metadata Support:</h6>
+          <pre><code># Rich structured data in logs
+user.log("Complex operation completed",
          log_level: "info",
-         log_chain: "payment_processed",
          metadata: {
            status: "success",
-           category: "payment",
+           category: "data_processing",
            data: {
-             amount: 99.99,
-             currency: "USD"
+             records_processed: 1000,
+             processing_time: "2.5s",
+             errors: 0,
+             warnings: 2
            }
          })</code></pre>
-
-          <h6>Cached Log Chain Behavior:</h6>
-          <pre><code># First log generates and caches a UUID
-user.log("First log")  # Uses: "abc-123-def"
-
-# Subsequent logs use the cached chain
-user.log("Second log")  # Uses: "abc-123-def" (cached)
-user.log("Third log")   # Uses: "abc-123-def" (cached)
-
-# Explicit log_chain breaks the cache
-user.log("New process", log_chain: "process_456")  # Uses: "process_456"
-
-# Next logs use the new cached chain
-user.log("Step 1")  # Uses: "process_456" (cached)
-user.log("Step 2")  # Uses: "process_456" (cached)</code></pre>
-
-          <h6>Batch Logging:</h6>
-          <pre><code>user.log_batch([
-  { message: "Step 1 completed", log_chain: "step_1", status: "success" },
-  { message: "Step 2 completed", log_chain: "step_2", status: "success" },
-  { message: "Process finished", log_chain: "process_complete", status: "complete" }
-])</code></pre>
         </div>
       </div>
     </div>

@@ -10,15 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_05_161734) do
-  create_table "active_record_logs", force: :cascade do |t|
+ActiveRecord::Schema[7.1].define(version: 2025_09_05_161734) do
+  create_table "active_model_logs", force: :cascade do |t|
     t.string "loggable_type", null: false
     t.integer "loggable_id", null: false
     t.text "message", default: ""
     t.text "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["loggable_type", "loggable_id"], name: "index_active_record_logs_on_loggable_type_and_loggable_id"
+    t.index ["loggable_type", "loggable_id"], name: "index_active_model_logs_on_loggable_type_and_loggable_id"
   end
 
   create_table "orders", force: :cascade do |t|
