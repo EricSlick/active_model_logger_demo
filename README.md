@@ -1,18 +1,21 @@
 # ActiveModelLogger Demo
 
-This is a comprehensive Rails 8.x application that demonstrates the advanced features of the ActiveModelLogger gem v0.2.0+.
+This is a comprehensive Rails 8.x application that demonstrates the advanced features of the ActiveModelLogger gem v0.2.0+ with **Mission Control Jobs** integration for complete observability.
 
-## Features
+## 🚀 Features
 
 - **Enhanced Logging**: Advanced logging with log chains, batch operations, and block logging
+- **Multi-Job Workflow**: Complex background job orchestration with cross-job traceability
+- **Job Monitoring**: Real-time job monitoring with Mission Control Jobs dashboard
 - **User Management**: Create users with comprehensive logging capabilities
 - **Order Processing**: Process orders with detailed workflow logging
 - **Interactive Demos**: Multiple demo actions showcasing different logging patterns
 - **Log Visualization**: Rich web interface with statistics and log browsing
 - **Query Scopes**: Advanced querying capabilities for log analysis
 - **Performance Testing**: Built-in performance benchmarks
+- **Log Chain Management**: Grouped log viewing with expandable/collapsible interface
 
-## Getting Started
+## 🛠 Getting Started
 
 1. **Install Dependencies**:
    ```bash
@@ -32,7 +35,12 @@ This is a comprehensive Rails 8.x application that demonstrates the advanced fea
 4. **Visit the Application**:
    Open your browser to `http://localhost:3000`
 
-## What You'll See
+5. **Access Job Dashboard** (Optional):
+   - Click "View Jobs Dashboard" button
+   - Monitor running jobs in real-time
+   - No authentication required in development
+
+## 📊 What You'll See
 
 The demo application provides:
 
@@ -41,11 +49,13 @@ The demo application provides:
 - **Recent Logs Table**: Comprehensive view of all log entries with:
   - Timestamp and model information
   - Message and log level
-  - Log chain (groups related logs)
+  - Log chain (groups related logs) - truncated display with hover for full value
   - Visibility, status, and category
   - Structured metadata and data
+- **Job Monitoring**: Real-time view of background job execution
+- **Log Chain Visualization**: Grouped log chains with expandable details
 
-## Demo Actions
+## 🎯 Demo Actions
 
 ### Core Demos
 - **Create Demo Data**: Generates comprehensive sample data with various log patterns
@@ -56,10 +66,62 @@ The demo application provides:
 
 ### Advanced Demos
 - **Nested Keys Demo**: Demonstrates enhanced `with_keys` scope with nested searching
+- **Log Chain Demo**: View and create log chains with grouped visualization
+- **Multi-Job Workflow Demo**: **NEW!** Complex background job orchestration
 - **Clear All Logs**: Removes all log entries from the database
 - **Cleanup Old Logs**: Removes logs older than 7 days
+- **Clear All Users**: Removes users and their associated logs
+- **Clear All Orders**: Removes orders and their associated logs
 
-## ActiveModelLogger v0.2.0+ Features
+## 🔄 Multi-Job Workflow Demo
+
+The **Multi-Job Workflow Demo** showcases complex background job orchestration with cross-job traceability:
+
+### Workflow Overview
+1. **OrderProcessingJob**: Validates order, processes payment, updates inventory, sends confirmation
+2. **EmailNotificationJob**: Prepares email, sends notification, tracks delivery status
+3. **InventoryManagementJob**: Checks availability, manages inventory, updates records
+
+### Key Features
+- **Shared Log Chain**: All jobs use the same `workflow_id` for complete traceability
+- **Structured Logging**: Each job logs detailed steps with metadata
+- **Cross-Job Visibility**: Track the entire workflow from start to finish
+- **Real-time Monitoring**: Watch jobs execute in the Mission Control Jobs dashboard
+
+### Code Example
+```ruby
+# Generate unique workflow ID for cross-job logging
+workflow_id = SecureRandom.uuid
+
+# Log workflow start
+user.log("Starting multi-job workflow",
+         log_chain: workflow_id,
+         category: "workflow_demo",
+         data: { workflow_id: workflow_id, total_jobs: 3 })
+
+# Queue jobs with same log_chain
+OrderProcessingJob.perform_later(order.id, workflow_id)
+EmailNotificationJob.perform_later(user.id, workflow_id, "order_confirmation")
+InventoryManagementJob.perform_later(order.id, workflow_id, "reserve")
+
+# Each job logs with the same log_chain for traceability
+class OrderProcessingJob < ApplicationJob
+  def perform(order_id, workflow_id)
+    ActiveModelLogger::Log.create!(
+      loggable: @order,
+      message: "Starting order processing workflow",
+      metadata: {
+        log_chain: workflow_id,
+        category: "order_processing",
+        data: { order_id: @order.id, step: 1, total_steps: 4 }
+      }
+    )
+    # ... processing steps ...
+  end
+end
+```
+
+## 📋 ActiveModelLogger v0.2.0+ Features
 
 ### Log Chains
 Log chains group related log entries together using UUIDs:
@@ -128,11 +190,12 @@ user.logs(log_chain: "user_session_123")
 order.logs(log_chain: "order_processing_789")
 ```
 
-## Models
+## 🏗 Models
 
 ### User Model
 - Includes `ActiveModelLogger::Loggable`
 - Configured with `auto_log_chain: true` for automatic chain generation
+- **Automatic Log Cleanup**: `dependent: :destroy` ensures logs are deleted when user is deleted
 - Methods:
   - `log_user_workflow_steps`: Batch logging for user workflows
   - `start_user_session`, `log_session_activity`, `end_user_session`: Session management
@@ -142,13 +205,14 @@ order.logs(log_chain: "order_processing_789")
 ### Order Model
 - Includes `ActiveModelLogger::Loggable`
 - Configured with `auto_log_chain: true` for automatic chain generation
+- **Automatic Log Cleanup**: `dependent: :destroy` ensures logs are deleted when order is deleted
 - Methods:
   - `start_order_processing`, `log_processing_step`, `complete_order_processing`: Workflow management
   - `log_order_lifecycle_events`: Batch lifecycle logging
   - `processing_logs`, `error_logs`, `recent_activity`: Query methods
   - `cleanup_order_logs`: Log maintenance
 
-## Log Structure
+## 📊 Log Structure
 
 All logs are stored in the `active_model_logs` table with:
 
@@ -176,7 +240,27 @@ The `active_model_logs` table is managed by the `active_model_logger` gem and co
 
 All additional fields (`log_chain`, `log_level`, `status`, `category`, `visible_to`, etc.) are stored within the `metadata` JSON field for maximum flexibility.
 
-## Performance Features
+## 🔧 Mission Control Jobs Integration
+
+### Job Monitoring Dashboard
+- **Real-time Monitoring**: Watch jobs execute in real-time
+- **Queue Management**: Monitor different job queues and their status
+- **Job Details**: View detailed information about individual jobs
+- **Performance Metrics**: Track job execution times and success rates
+- **Error Handling**: Monitor failed jobs and their error messages
+
+### Accessing the Dashboard
+1. Click "View Jobs Dashboard" button on the main page
+2. No authentication required in development
+3. Monitor the Multi-Job Workflow Demo in real-time
+4. View job parameters, execution times, and error details
+
+### Job Configuration
+- **Queue Adapter**: Uses `:async` adapter for proper job processing
+- **Authentication**: Disabled in development for ease of use
+- **Integration**: Perfect complement to ActiveModelLogger for complete observability
+
+## ⚡ Performance Features
 
 ### Batch Operations
 - `log_batch`: Efficient bulk logging
@@ -193,7 +277,12 @@ All additional fields (`log_chain`, `log_level`, `status`, `category`, `visible_
 - Configurable retention periods
 - Memory-efficient batch operations
 
-## Testing Scripts
+### Job Processing
+- Asynchronous job execution
+- Real-time job monitoring
+- Efficient queue management
+
+## 🧪 Testing Scripts
 
 The project includes comprehensive testing scripts:
 
@@ -209,22 +298,49 @@ The project includes comprehensive testing scripts:
 - Concurrent logging tests
 - Query performance benchmarks
 
-## Rails 8.x Compatibility
+## 🚀 Rails 8.x Compatibility
 
 This demo is built with Rails 8.0.2.1 and includes:
 - Propshaft asset pipeline
 - Turbo and Stimulus integration
 - Modern Rails 8.x features
 - Compatible with Ruby 3.3.1
+- Mission Control Jobs integration
+- Solid Queue for job processing
 
-## Learn More
+## 🎯 Complete Observability Solution
 
-This demo showcases the full capabilities of ActiveModelLogger v0.2.0+. The gem provides:
+This demo showcases a complete observability solution combining:
 
+### ActiveModelLogger
 - **Structured Logging**: Rich metadata and categorization
 - **Performance**: Efficient batch operations and querying
 - **Flexibility**: Multiple logging patterns and query options
 - **Integration**: Seamless ActiveRecord integration
 - **Maintenance**: Built-in cleanup and management tools
 
-For more information, check out the main ActiveModelLogger gem repository.
+### Mission Control Jobs
+- **Job Monitoring**: Real-time job execution tracking
+- **Queue Management**: Monitor job queues and performance
+- **Error Tracking**: Detailed error information and debugging
+- **Performance Metrics**: Execution times and success rates
+
+### Together
+- **End-to-End Visibility**: Complete traceability from web requests to background jobs
+- **Cross-System Logging**: Shared log chains across different systems
+- **Real-time Monitoring**: Watch complex workflows execute in real-time
+- **Comprehensive Debugging**: Detailed logs and job execution information
+
+## 📚 Learn More
+
+This demo showcases the full capabilities of ActiveModelLogger v0.2.0+ combined with Mission Control Jobs for complete observability. The combination provides:
+
+- **Structured Logging**: Rich metadata and categorization
+- **Performance**: Efficient batch operations and querying
+- **Flexibility**: Multiple logging patterns and query options
+- **Integration**: Seamless ActiveRecord integration
+- **Maintenance**: Built-in cleanup and management tools
+- **Job Monitoring**: Real-time background job tracking
+- **Complete Observability**: End-to-end visibility into complex workflows
+
+For more information, check out the main ActiveModelLogger gem repository and Mission Control Jobs documentation.

@@ -300,15 +300,42 @@ InventoryManagementJob.perform_later(order.id, workflow_id, "reserve")
 
 # Each job logs with the same log_chain for traceability
 class OrderProcessingJob < ApplicationJob
-  include ActiveModelLogger::Loggable
-
   def perform(order_id, workflow_id)
-    log("Starting order processing",
+    @order = Order.find(order_id)
+
+    ActiveModelLogger::Log.create!(
+      loggable: @order,
+      message: "Starting order processing workflow",
+      metadata: {
         log_chain: workflow_id,
-        category: "order_processing")
-    # ... processing steps ...
+        category: "order_processing",
+        data: { order_id: @order.id, step: 1, total_steps: 4 }
+      }
+    )
+    # ... processing steps with detailed logging ...
   end
 end</code></pre>
+
+          <h6>Mission Control Jobs Integration:</h6>
+          <pre><code># Monitor jobs in real-time with Mission Control Jobs
+# Access dashboard at /jobs (no authentication in development)
+
+# Job monitoring provides:
+# - Real-time job execution status
+# - Queue management and performance metrics
+# - Detailed job parameters and execution times
+# - Error tracking and debugging information
+
+# Perfect complement to ActiveModelLogger:
+# - Mission Control: Job execution monitoring
+# - ActiveModelLogger: Detailed workflow logging
+# - Together: Complete end-to-end observability
+
+# Example: Watch Multi-Job Workflow Demo execute
+# 1. Click "Multi-Job Workflow Demo" button
+# 2. Open "View Jobs Dashboard" in another tab
+# 3. Watch jobs move from "queued" → "running" → "completed"
+# 4. See detailed logs in ActiveModelLogger interface</code></pre>
 
           <h6>Block Logging with Automatic Start/End:</h6>
           <pre><code># Block logging with manual start/end messages
@@ -352,6 +379,34 @@ ActiveModelLogger::Log.with_keys("email", "sms") # Finds logs with both keys
 # {"config": {"cache": {"redis": {"enabled": true}}}}
 
 # All of these would be found by with_keys("email") or with_keys("enabled")</code></pre>
+
+          <h6>Complete Observability Solution:</h6>
+          <pre><code># ActiveModelLogger + Mission Control Jobs = Complete Observability
+
+# 1. Web Request Logging (ActiveModelLogger)
+user.log("User initiated order workflow",
+         log_chain: workflow_id,
+         category: "user_action",
+         data: { user_id: user.id, action: "create_order" })
+
+# 2. Background Job Monitoring (Mission Control Jobs)
+# - Watch jobs execute in real-time at /jobs
+# - Monitor queue performance and job status
+# - Track execution times and error rates
+
+# 3. Cross-Job Logging (ActiveModelLogger)
+# All jobs use the same log_chain for complete traceability:
+OrderProcessingJob.perform_later(order.id, workflow_id)
+EmailNotificationJob.perform_later(user.id, workflow_id, "confirmation")
+InventoryManagementJob.perform_later(order.id, workflow_id, "reserve")
+
+# 4. End-to-End Visibility
+# - Web request → Background jobs → Database operations
+# - Complete audit trail with shared log_chain
+# - Real-time monitoring + detailed logging
+# - Performance metrics + structured data
+
+# Result: Complete visibility into complex workflows!</code></pre>
         </div>
       </div>
     </div>
