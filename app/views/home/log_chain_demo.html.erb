@@ -1,0 +1,171 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Log Chain Demo</h1>
+      <div class="alert alert-info">
+        <h5><i class="fas fa-info-circle"></i> How Log Chains Work</h5>
+        <p class="mb-0">
+          Log chains group related log entries together. Click on any row below to expand and see all logs in that chain.
+          Each chain represents a complete workflow or process.
+        </p>
+      </div>
+      <% if @log_chains.empty? %>
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-exclamation-triangle"></i> No Log Chains Found</h5>
+          <p>No logs with log chains were found. Try creating some demo data first.</p>
+          <%= form_with url: create_log_chain_demo_path, method: :post, local: true do |form| %>
+            <%= form.submit "Create Log Chain Demo", class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <h4>Log Chains (<%= @log_chains.count %> chains found)</h4>
+          </div>
+          <div class="col-md-6 text-end">
+            <%= link_to "← Back to Main Demo", root_path, class: "btn btn-secondary" %>
+          </div>
+        </div>
+        <div class="accordion" id="logChainsAccordion">
+          <% @log_chains.each_with_index do |chain_data, index| %>
+            <% first_log = chain_data[:first_log] %>
+            <% chain_id = chain_data[:chain_id] %>
+            <% total_count = chain_data[:total_count] %>
+            <% all_logs = chain_data[:all_logs] %>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading<%= index %>">
+                <button class="accordion-button <%= 'collapsed' if index != 0 %>"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapse<%= index %>"
+                        aria-expanded="<%= 'true' if index == 0 %>"
+                        aria-controls="collapse<%= index %>">
+                  <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                      <strong><%= first_log.message %></strong><br>
+                      <small class="text-muted">
+                        Chain ID: <span class="badge bg-info" title="<%= chain_id %>"><%= chain_id.last(14) %></span>
+                        (<%= total_count %> logs)
+                        <span class="badge bg-primary"><%= first_log.loggable_type %>#<%= first_log.loggable_id %></span>
+                        <% if first_log.metadata && first_log.metadata['log_level'] %>
+                          <span class="badge bg-<%= log_level_class(first_log.metadata['log_level']) %>">
+                            <%= first_log.metadata['log_level'] %>
+                          </span>
+                        <% end %>
+                        <% if first_log.metadata && first_log.metadata['category'] %>
+                          <span class="badge bg-secondary">
+                            <%= first_log.metadata['category'] %>
+                          </span>
+                        <% end %>
+                      </small>
+                    </div>
+                    <small class="text-muted text-end"><%= time_ago_in_words(first_log.created_at) %> ago</small>
+                  </div>
+                </button>
+              </h2>
+              <div id="collapse<%= index %>" class="accordion-collapse collapse <%= 'show' if index == 0 %>"
+                   aria-labelledby="heading<%= index %>" data-bs-parent="#logChainsAccordion">
+                <div class="accordion-body">
+                  <h6 class="mb-3">Logs in this chain:</h6>
+                  <table class="table table-sm table-bordered table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>ID</th><th>Type</th><th>Message</th><th>Level</th><th>Status</th><th>Category</th><th>Data</th><th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% all_logs.each do |log| %>
+                        <tr>
+                          <td><%= log.id %></td>
+                          <td><%= log.loggable_type %>#<%= log.loggable_id %></td>
+                          <td><%= log.message %></td>
+                          <td>
+                            <% if log.metadata && log.metadata['log_level'] %>
+                              <span class="badge bg-<%= log_level_class(log.metadata['log_level']) %>">
+                                <%= log.metadata['log_level'] %>
+                              </span>
+                            <% end %>
+                          </td>
+                          <td>
+                            <% if log.metadata && log.metadata['status'] %>
+                              <span class="badge bg-secondary">
+                                <%= log.metadata['status'] %>
+                              </span>
+                            <% end %>
+                          </td>
+                          <td>
+                            <% if log.metadata && log.metadata['category'] %>
+                              <span class="badge bg-info">
+                                <%= log.metadata['category'] %>
+                              </span>
+                            <% end %>
+                          </td>
+                          <td>
+                            <% if log.metadata && log.metadata['data'] %>
+                              <pre class="mb-0 small"><%= JSON.pretty_generate(log.metadata['data']) %></pre>
+                            <% end %>
+                          </td>
+                          <td><%= time_ago_in_words(log.created_at) %> ago</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+.accordion-button:not(.collapsed) {
+  background-color: #e3f2fd;
+  border-color: #bbdefb;
+}
+
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.accordion-item {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.accordion-button {
+  background-color: #f8f9fa;
+  border: none;
+  border-radius: 0.375rem;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #e3f2fd;
+  border-color: #bbdefb;
+}
+
+.badge {
+  font-size: 0.75em;
+  margin-right: 0.25rem;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  border-top: none;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+pre {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+</style>

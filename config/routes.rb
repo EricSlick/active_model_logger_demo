@@ -8,8 +8,12 @@ Rails.application.routes.draw do
   post "home/create_cleanup_demo", as: :create_cleanup_demo
   post "home/create_block_demo", as: :create_block_demo
   post "home/create_nested_keys_demo", as: :create_nested_keys_demo
+  post "home/create_log_chain_demo", as: :create_log_chain_demo
+  get "home/log_chain_demo", as: :log_chain_demo
   post "home/create_test_logs_for_cleanup", as: :create_test_logs_for_cleanup
   delete "home/clear_logs", as: :clear_logs
+  delete "home/clear_users", as: :clear_users
+  delete "home/clear_orders", as: :clear_orders
   delete "home/cleanup_old_logs", as: :cleanup_old_logs
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

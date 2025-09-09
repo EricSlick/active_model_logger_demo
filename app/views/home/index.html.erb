@@ -46,6 +46,16 @@
               <% end %>
               <small class="text-muted">Enhanced with_keys scope with nested searching</small>
             </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_log_chain_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Create Log Chain Demo", class: "btn btn-success w-100" %>
+              <% end %>
+              <small class="text-muted">Creates demo data and shows grouped log chains</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= link_to "View Log Chains", log_chain_demo_path, class: "btn btn-outline-success w-100" %>
+              <small class="text-muted">View existing log chains in grouped format</small>
+            </div>
           </div>
           <hr>
           <div class="row">
@@ -56,12 +66,26 @@
               <% end %>
             </div>
             <div class="col-md-4">
+              <%= form_with url: clear_users_path, method: :delete, local: true do |form| %>
+                <%= form.submit "Clear All Users", class: "btn btn-warning w-100",
+                    confirm: "Are you sure you want to clear all users and their logs?" %>
+              <% end %>
+            </div>
+            <div class="col-md-4">
+              <%= form_with url: clear_orders_path, method: :delete, local: true do |form| %>
+                <%= form.submit "Clear All Orders", class: "btn btn-warning w-100",
+                    confirm: "Are you sure you want to clear all orders and their logs?" %>
+              <% end %>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-md-6">
               <%= form_with url: create_test_logs_for_cleanup_path, method: :post, local: true do |form| %>
                 <%= form.submit "Create Test Logs (3 Weeks)", class: "btn btn-info w-100" %>
               <% end %>
               <small class="text-muted">30 logs spanning previous 3 weeks</small>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <%= form_with url: cleanup_old_logs_path, method: :delete, local: true do |form| %>
                 <%= form.submit "Cleanup Old Logs", class: "btn btn-secondary w-100",
                     confirm: "Clean up logs older than 7 days?" %>
@@ -83,9 +107,9 @@
           <p><strong>Total Logs:</strong> <%= ActiveModelLogger::Log.count %></p>
           <p><strong>Showing:</strong> <%= @logs.count %> of <%= ActiveModelLogger::Log.count %></p>
           <hr>
-          <p><strong>Error Logs:</strong> <%= ActiveModelLogger::Log.error_logs.count %></p>
-          <p><strong>Info Logs:</strong> <%= ActiveModelLogger::Log.info_logs.count %></p>
-          <p><strong>Debug Logs:</strong> <%= ActiveModelLogger::Log.debug_logs.count %></p>
+          <p><strong>Error Logs:</strong> <%= ActiveModelLogger::Log.where("JSON_EXTRACT(metadata, '$.log_level') = ?", 'error').count %></p>
+          <p><strong>Info Logs:</strong> <%= ActiveModelLogger::Log.where("JSON_EXTRACT(metadata, '$.log_level') = ?", 'info').count %></p>
+          <p><strong>Debug Logs:</strong> <%= ActiveModelLogger::Log.where("JSON_EXTRACT(metadata, '$.log_level') = ?", 'debug').count %></p>
           <hr>
           <p><strong>Logs with 'email' key:</strong> <%= ActiveModelLogger::Log.with_keys("email").count %></p>
           <p><strong>Logs with 'enabled' key:</strong> <%= ActiveModelLogger::Log.with_keys("enabled").count %></p>
@@ -144,9 +168,10 @@
                       </td>
                       <td><%= log.message %></td>
                       <td>
-                        <% if log.metadata && log.metadata['log_key'] %>
-                          <span class="badge bg-info">
-                            <%= log.metadata['log_key'] %>
+                        <% if log.metadata && log.metadata['log_chain'] %>
+                          <% log_chain = log.metadata['log_chain'] %>
+                          <span class="badge bg-info" title="<%= log_chain %>">
+                            ...<%= log_chain.last(14) %>
                           </span>
                         <% end %>
                       </td>
