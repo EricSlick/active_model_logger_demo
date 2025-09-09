@@ -2,7 +2,7 @@ class User < ApplicationRecord
   include ActiveModelLogger::Loggable
 
   has_many :orders, dependent: :destroy
-  has_many :active_model_logs, as: :loggable, class_name: 'ActiveModelLogger::Log', dependent: :destroy
+  has_many :active_model_logs, as: :loggable, class_name: "ActiveModelLogger::Log", dependent: :destroy
 
   # Configure logging defaults for users
   configure_loggable(
