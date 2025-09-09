@@ -98,6 +98,42 @@ class HomeController < ApplicationController
     redirect_to root_path, notice: "Cleared #{order_count} orders and their associated logs!"
   end
 
+  def create_job_workflow_demo
+    # Create a user and order for the demo
+    user = User.create!(
+      name: "Job Workflow Demo User",
+      email: "job-demo@example.com"
+    )
+
+    order = user.orders.create!(
+      amount: rand(50..500),
+      status: "pending"
+    )
+
+    # Generate a unique workflow ID for this demo
+    workflow_id = SecureRandom.uuid
+
+    # Log the start of the workflow
+    user.log("Starting multi-job workflow demo",
+             log_chain: workflow_id,
+             metadata: {
+               category: "workflow_demo",
+               data: {
+                 workflow_id: workflow_id,
+                 user_id: user.id,
+                 order_id: order.id,
+                 total_jobs: 3
+               }
+             })
+
+    # Queue the jobs with the same log_chain
+    OrderProcessingJob.perform_later(order.id, workflow_id)
+    EmailNotificationJob.perform_later(user.id, workflow_id, "order_confirmation")
+    InventoryManagementJob.perform_later(order.id, workflow_id, "reserve")
+
+    redirect_to root_path, notice: "Multi-job workflow demo started! Check the logs to see the workflow progress. Workflow ID: #{workflow_id[0..8]}..."
+  end
+
   def cleanup_old_logs
     total_cleaned = 0
     user_cleaned = 0

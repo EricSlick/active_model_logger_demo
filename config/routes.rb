@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   root "home#index"
 
+  # Mission Control Jobs for job monitoring
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+
   get "home/index"
   post "home/create_demo", as: :create_demo
   post "home/create_session_demo", as: :create_session_demo
@@ -10,6 +13,7 @@ Rails.application.routes.draw do
   post "home/create_nested_keys_demo", as: :create_nested_keys_demo
   post "home/create_log_chain_demo", as: :create_log_chain_demo
   get "home/log_chain_demo", as: :log_chain_demo
+  post "home/create_job_workflow_demo", as: :create_job_workflow_demo
   post "home/create_test_logs_for_cleanup", as: :create_test_logs_for_cleanup
   delete "home/clear_logs", as: :clear_logs
   delete "home/clear_users", as: :clear_users

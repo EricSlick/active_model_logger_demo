@@ -56,13 +56,23 @@
               <%= link_to "View Log Chains", log_chain_demo_path, class: "btn btn-outline-success w-100" %>
               <small class="text-muted">View existing log chains in grouped format</small>
             </div>
+            <div class="col-md-6 mb-2">
+              <%= form_with url: create_job_workflow_demo_path, method: :post, local: true do |form| %>
+                <%= form.submit "Multi-Job Workflow Demo", class: "btn btn-info w-100" %>
+              <% end %>
+              <small class="text-muted">Demonstrate logging across multiple background jobs</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <%= link_to "View Jobs Dashboard", "/jobs", class: "btn btn-warning w-100", target: "_blank" %>
+              <small class="text-muted">Monitor running jobs with Mission Control</small>
+            </div>
           </div>
           <hr>
           <div class="row">
             <div class="col-md-4">
               <%= form_with url: clear_logs_path, method: :delete, local: true do |form| %>
                 <%= form.submit "Clear All Logs", class: "btn btn-danger w-100",
-                    confirm: "Are you sure you want to clear all logs?" %>
+                    confirm: "mission_control-jobsAre you sure you want to clear all logs?" %>
               <% end %>
             </div>
             <div class="col-md-4">
@@ -272,6 +282,33 @@ user.cleanup_logs(older_than: 7.days, keep_recent: 10)
 # Class-level queries
 User.with_recent_logs(since: 1.hour.ago)  # Users with recent activity
 User.with_logs_at_level("error")          # Users with error logs</code></pre>
+
+          <h6>Multi-Job Workflow Logging:</h6>
+          <pre><code># Generate unique workflow ID for cross-job logging
+workflow_id = SecureRandom.uuid
+
+# Log workflow start
+user.log("Starting multi-job workflow",
+         log_chain: workflow_id,
+         category: "workflow_demo",
+         data: { workflow_id: workflow_id, total_jobs: 3 })
+
+# Queue jobs with same log_chain
+OrderProcessingJob.perform_later(order.id, workflow_id)
+EmailNotificationJob.perform_later(user.id, workflow_id, "order_confirmation")
+InventoryManagementJob.perform_later(order.id, workflow_id, "reserve")
+
+# Each job logs with the same log_chain for traceability
+class OrderProcessingJob < ApplicationJob
+  include ActiveModelLogger::Loggable
+
+  def perform(order_id, workflow_id)
+    log("Starting order processing",
+        log_chain: workflow_id,
+        category: "order_processing")
+    # ... processing steps ...
+  end
+end</code></pre>
 
           <h6>Block Logging with Automatic Start/End:</h6>
           <pre><code># Block logging with manual start/end messages

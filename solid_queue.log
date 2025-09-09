@@ -1,0 +1,5 @@
+bin/rails aborted!
+ActiveRecord::StatementInvalid: Could not find table 'solid_queue_processes' (ActiveRecord::StatementInvalid)
+
+Tasks: TOP => solid_queue:start
+(See full trace by running task with --trace)

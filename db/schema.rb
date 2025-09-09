@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_09_05_161734) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_05_161734) do
   create_table "active_model_logs", force: :cascade do |t|
     t.string "loggable_type", null: false
     t.integer "loggable_id", null: false
