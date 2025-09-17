@@ -1,8 +1,6 @@
 class Order < ApplicationRecord
-  include ActiveModelLogger::Loggable
 
   belongs_to :user
-  has_many :active_model_logs, as: :loggable, class_name: "ActiveModelLogger::Log", dependent: :destroy
 
   # Configure logging defaults for orders
   configure_loggable(
